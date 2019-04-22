@@ -47,15 +47,17 @@ local onProjectileEnded
 local newFrame
 local init
 
--- Displays game-over message when game is lost
+-- Displays win or loss message when game ends
 function endGame( message )
-	gameEnded = display.newText{
-		text = message,
-		x = glo.WIDTH / 2,
-		y = glo.HEIGHT / 2,
-		font = native.systemFontBold,
-		align = "center"
-	}
+	if gameEnded == nil then
+		gameEnded = display.newText{
+			text = message,
+			x = glo.WIDTH / 2,
+			y = glo.HEIGHT / 2,
+			font = native.systemFontBold,
+			align = "center"
+		}
+	end
 end
 
 function push( obj, stack )
