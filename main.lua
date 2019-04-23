@@ -25,32 +25,37 @@ Grading
 		but loses if runs out of projectiles
 	[TODO](10) Good comments, indentation, and function structure
 
- Extra Credit:
+Extra Credit:
 
 	(0-5) Interesting/creative coolness in any area,
 		above and beyond the minimum requirements above.
 
+My Ideas:
+	Make the level contain collectable targets that do not affect physics,
+		but are usable as projectiles. 
 --]]
 
 local glo = require( "globals" )
+local Projectile = require( "Projectile" )
 
 -- Variables
-local projectiles -- table for all the player's projectiles
-local gameEnded -- text that is generated when the game ends
+local projectiles -- stack of all the player's unused projectiles
+local projectile -- the active projectile, popped from projectiles
+local roundEnded -- text that is generated when the round ends
 
 -- Functions
 
-local endGame
+local endRound
 local push
 local pop
 local onProjectileEnded
 local newFrame
 local init
 
--- Displays win or loss message when game ends
-function endGame( message )
-	if gameEnded == nil then
-		gameEnded = display.newText{
+-- Displays win or loss message when round ends
+function endRound( message )
+	if roundEnded == nil then
+		roundEnded = display.newText{
 			text = message,
 			x = glo.WIDTH / 2,
 			y = glo.HEIGHT / 2,
@@ -60,27 +65,41 @@ function endGame( message )
 	end
 end
 
+-- Adds the object to the top of a stack
 function push( obj, stack )
 	stack[ #stack + 1 ] = obj
 end
 
+-- Removes and returns the object from the top of a stack
+-- Does nothing if the stack is empty
 function pop( stack )
-	local obj = stack[ #stack ]
-	stack[#stack] = nil
+	local obj
+	if #stack > 0 then
+		obj = stack[ #stack ]
+		stack[#stack] = nil
+	end
 	return obj
+end
+
+function loadProjectile()
+	projectile = pop( projectiles )
+	projectile.x = slingshot.x
+	projectile.y = slingshot.y
+	projectile:addEventListener( "touch", aimProjectile )
 end
 
 function onProjectileEnded()
 	if #projectiles <= 0 then
-		endGame( glo.MESSAGE_ON_LOSE )
+		endRound( glo.MESSAGE_ON_LOSE )
 	else
-		loadProjectile()
+
+		projectile:ready( slingshot )
 	end
 end
 
 function newFrame()
 	if targetHit then
-		endGame( glo.MESSAGE_ON_WIN )
+		endRound( glo.MESSAGE_ON_WIN )
 	end
 end
 
