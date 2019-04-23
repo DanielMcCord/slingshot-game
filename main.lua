@@ -72,7 +72,6 @@ end
 -- Pops the object from the top of a stack
 -- Returns nil if the stack is empty
 function pop( stack )
-	local obj
 	if #stack > 0 then
 		local obj = stack[ #stack ]
 		stack[#stack] = nil
