@@ -32,7 +32,7 @@ Extra Credit:
 
 My Ideas:
 	Make the level contain collectable targets that do not affect physics,
-		but are usable as projectiles. 
+		but are usable as projectiles. They will be pushed to the projectiles stack.
 --]]
 
 local glo = require( "globals" )
@@ -44,7 +44,6 @@ local projectile -- the active projectile, popped from projectiles
 local roundEnded -- text that is generated when the round ends
 
 -- Functions
-
 local endRound
 local push
 local pop
@@ -65,44 +64,47 @@ function endRound( message )
 	end
 end
 
--- Adds the object to the top of a stack
+-- Pushes the object to the top of a stack
 function push( obj, stack )
 	stack[ #stack + 1 ] = obj
 end
 
--- Removes and returns the object from the top of a stack
--- Does nothing if the stack is empty
+-- Pops the object from the top of a stack
+-- Returns nil if the stack is empty
 function pop( stack )
 	local obj
 	if #stack > 0 then
-		obj = stack[ #stack ]
+		local obj = stack[ #stack ]
 		stack[#stack] = nil
+		return obj
+	else
+		return nil
 	end
-	return obj
 end
 
-function loadProjectile()
-	projectile = pop( projectiles )
-	projectile.x = slingshot.x
-	projectile.y = slingshot.y
-	projectile:addEventListener( "touch", aimProjectile )
+-- Loads next projectile from stack into slingshot
+function loadProjectile( stack, slingshot )
+	projectile = pop( stack )
+	projectile:ready( slingshot )
 end
 
+-- What to do when the current projectile is done
 function onProjectileEnded()
 	if #projectiles <= 0 then
 		endRound( glo.MESSAGE_ON_LOSE )
 	else
-
-		projectile:ready( slingshot )
+		loadProjectile( projectiles, slingshot )
 	end
 end
 
+-- Run once per frame
 function newFrame()
 	if targetHit then
 		endRound( glo.MESSAGE_ON_WIN )
 	end
 end
 
+-- Run at app startup
 function init()
 	Runtime:addEventListener( "enterFrame", newFrame )
 end
