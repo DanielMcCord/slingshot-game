@@ -47,6 +47,7 @@ local roundEnded -- text that is generated when the round ends
 local endRound
 local push
 local pop
+local loadProjectile
 local onProjectileEnded
 local newFrame
 local init
@@ -105,6 +106,25 @@ end
 
 -- Run at app startup
 function init()
+	-- Create platforms/ground
+
+	-- Create slingshot
+	local sa = require( "slingshot-attributes" )
+	slingshot = display.newImageRect( sa.file, sa.width, sa.height )
+	slingshot.x = sa.defaultX
+	slingshot.y = sa.defaultY
+
+	-- Create castle
+
+	-- Create target
+
+	-- Create projectiles
+
+	-- Start physics
+
+	-- Load the first projectile
+	-- loadProjectile( projectiles, slingshot )
+
 	Runtime:addEventListener( "enterFrame", newFrame )
 end
 

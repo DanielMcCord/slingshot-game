@@ -10,6 +10,8 @@
 --
 -----------------------------------------------------------------------------------------
 
+physics = require( "physics" )
+
 local Projectile = {}
 
 function Projectile:new( p )
