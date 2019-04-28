@@ -119,7 +119,14 @@ function init()
 	-- Create target
 
 	-- Create projectiles
-
+	print("display.ShapeObject:",display.ShapeObject)
+	projTest=Projectile:new( 1, 1 , 1 )
+	print( "getmetatable( Projectile ):", getmetatable( Projectile ) )
+	blah = display.newCircle( 20, 20, 20 )
+	print("blah")
+	for k1,v1 in pairs(blah._class.__index.__index.__index.__index) do
+		print("\t",k1,v1)
+	end
 	-- Start physics
 
 	-- Load the first projectile

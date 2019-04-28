@@ -10,12 +10,19 @@
 --
 -----------------------------------------------------------------------------------------
 
-physics = require( "physics" )
+local physics = require( "physics" )
 
 local Projectile = {}
+setmetatable( Projectile, display.ShapeObject )
 
-function Projectile:new( p )
-	p = p or {}
+function Projectile:new( xCenter, yCenter, radius, parent )
+	local p
+	if parent then
+		p = display.newCircle( parent, xCenter, yCenter, radius )
+	else
+		p = display.newCircle( xCenter, yCenter, radius )
+	end
+	print( "getmetatable( p ):", getmetatable( p ) )
 	setmetatable(p, self)
 	self.__index = self
 	return p
