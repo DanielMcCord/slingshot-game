@@ -22,7 +22,6 @@ function Projectile:new( xCenter, yCenter, radius, parent )
 	else
 		p = display.newCircle( xCenter, yCenter, radius )
 	end
-	print( "getmetatable( p ):", getmetatable( p ) )
 	setmetatable(p, self)
 	self.__index = self
 	return p
