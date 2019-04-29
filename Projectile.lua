@@ -13,7 +13,6 @@
 local physics = require( "physics" )
 
 local Projectile = {}
-setmetatable( Projectile, display.ShapeObject )
 
 function Projectile:new( xCenter, yCenter, radius, parent )
 	local p
@@ -22,13 +21,16 @@ function Projectile:new( xCenter, yCenter, radius, parent )
 	else
 		p = display.newCircle( xCenter, yCenter, radius )
 	end
-	setmetatable(p, self)
-	self.__index = self
+	-- Metatables were not working correctly with ShapeObject class,
+	-- so I forced the issue by adding these methods the old way.
+	p.ready = self.ready
+	p.aim = self.aim
+	p.fire = self.fire
 	return p
 end
 
 -- Places the projectile in the slingshot.
--- The slingshot only needs to be speicified if
+-- The slingshot only needs to be specified if
 -- the projectile has not yet been assigned a slingshot
 function Projectile:ready( slingshot )
 	-- Remove the listener, because it might already exist
