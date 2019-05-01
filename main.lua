@@ -13,7 +13,7 @@
 --[[
 Grading
 
-	[TODO](10) Display of slingshot
+	[DONE](10) Display of slingshot
 	[TODO](10) Display of castle on platform with target object inside
 	[TODO](10) Display tracking of projectile as user drags
 	[TODO](10) Physics of projectile in flight
@@ -106,13 +106,18 @@ end
 
 -- Run at app startup
 function init()
+	physics.start( )
 	-- Create platforms/ground
+	ground = display.newImageRect( "ground.png", glo.WIDTH, glo.HEIGHT / 10 )
+	ground.x = glo.X_CENTER
+	ground.y = glo.Y_MAX - ground.height / 2
+	physics.addBody( ground, "static" )
 
 	-- Create slingshot
 	local sa = require( "slingshot-attributes" )
 	slingshot = display.newImageRect( sa.file, sa.width, sa.height )
 	slingshot.x = sa.defaultX
-	slingshot.y = sa.defaultY
+	slingshot.y = ground.y - ( slingshot.height + ground.height ) / 2 or sa.defaultY
 
 	-- Create castle
 
