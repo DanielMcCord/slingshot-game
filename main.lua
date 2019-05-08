@@ -112,9 +112,26 @@ function onTargetHit()
 	endRound( glo.MESSAGE_ON_WIN )
 end
 
+-- Returns a boolean giving whether the projectile is still available to physics
+function projectileInPlay()
+	if not projectile then
+		return false
+	elseif projectile.isBodyActive and not projectile.isAwake then
+		return false
+	elseif math.abs( projectile.x - glo.X_CENTER ) > ( glo.WIDTH + projectile.x ) / 2 then
+		return false
+	else
+		return true
+	end
+end
+
 -- Run once per frame
 function newFrame()
-
+	if not projectileInPlay() then
+		projectile:removeSelf( )
+		projectile = nil
+		onProjectileEnded()
+	end
 end
 
 -- Run at app startup
