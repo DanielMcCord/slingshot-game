@@ -217,14 +217,14 @@ function init()
 			obj.hp = obj.hp - event.force * 9999
 			print("hp after:",obj.hp) -- testing
 			if obj.hp <= 0 then
-				local e = display.newCircle( obj.x, obj.y, (obj.width + obj.height)/2 )
+				local e = display.newCircle( obj.x, obj.y, (obj.width + obj.height)/4 )
 				obj:removeSelf()
 				obj = nil
 				transition.to(e, {
 					xScale = 2,
 					yScale = 2,
 					alpha = .5,
-					onComplete = onExplosionEnd
+					onComplete = kill
 				})
 			end
 		end
