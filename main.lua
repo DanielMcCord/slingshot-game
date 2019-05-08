@@ -18,7 +18,7 @@ Grading
 	[TODO](10) Display tracking of projectile as user drags
 	[TODO](10) Physics of projectile in flight
 	[TODO](10) Physics of projectile knocking over castle parts
-	[TODO](10) At least two castle parts are connected by a joint
+	[DONE](10) At least two castle parts are connected by a joint
 	[TODO](10) Display of projectile causing damage to castle parts over repeated hits
 	[TODO](10) Castle parts explode/disappear after enough hits (individually)
 	[TODO](10) User wins if the target object is hit,
@@ -163,6 +163,7 @@ function init()
 		obj.rotation = rotation or self.default.rotation
 		obj.x = self.default.x
 		obj.y = self.default.y - castle.blockVertH( obj )
+		obj.hp = 100
 		arrayAppend( obj, castle )
 		return obj
 	end
@@ -205,8 +206,6 @@ function init()
 	-- Create target
 
 	-- Create projectiles
-
-	-- Start physics
 
 	-- Load the first projectile
 	-- loadProjectile( projectiles, slingshot )
