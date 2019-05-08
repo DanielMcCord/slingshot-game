@@ -36,10 +36,14 @@ My Ideas:
 --]]
 
 local glo = require( "globals" )
+local physics = require( "physics" )
 local Projectile = require( "Projectile" )
 
 -- Variables
+local ground -- static platform at bottom of screen
+local slingshot
 local projectiles -- stack of all the player's unused projectiles
+local castle -- table of all the physics objects that make up the castle
 local projectile -- the active projectile, popped from projectiles
 local roundEnded -- text that is generated when the round ends
 
@@ -47,8 +51,10 @@ local roundEnded -- text that is generated when the round ends
 local endRound
 local push
 local pop
+local arrayAppend
 local loadProjectile
 local onProjectileEnded
+local onTargetHit
 local newFrame
 local init
 
@@ -82,8 +88,13 @@ function pop( stack )
 	end
 end
 
+-- Appends item to end of an array. Really just alias of push().
+function arrayAppend( obj, arr )
+	push( obj, arr )
+end
+
 -- Loads next projectile from stack into slingshot
-function loadProjectile( stack, slingshot )
+function loadProjectile( stack )
 	projectile = pop( stack )
 	projectile:ready( slingshot )
 end
@@ -97,15 +108,18 @@ function onProjectileEnded()
 	end
 end
 
+function onTargetHit()
+	endRound( glo.MESSAGE_ON_WIN )
+end
+
 -- Run once per frame
 function newFrame()
-	if targetHit then
-		endRound( glo.MESSAGE_ON_WIN )
-	end
+
 end
 
 -- Run at app startup
 function init()
+
 	physics.start( )
 	-- Create platforms/ground
 	ground = display.newImageRect( "ground.png", glo.WIDTH, glo.HEIGHT / 10 )
@@ -119,7 +133,74 @@ function init()
 	slingshot.x = sa.defaultX
 	slingshot.y = ground.y - ( slingshot.height + ground.height ) / 2 or sa.defaultY
 
-	-- Create castle
+	-- Create castle with various default values
+	castle = {
+		default = {
+			rotation = 0,
+			width = 60,
+			height = 10,
+			x = 0.75 * glo.WIDTH + glo.X_MIN,
+			-- Note: default.y is ground level, which you probably don't want.
+			-- castle:newBlock (below) does trig magic to fix this.
+			y = ground.y - (ground.height) / 2,
+			filename = "block.png"
+		}
+	}
+
+	-- Accurately calculates the vertical height of the rectangular block.
+	function castle.blockVertH( block )
+		return block.width * math.sin( math.rad( block.rotation ) ) / 2
+			+ block.height * math.cos( math.rad( block.rotation ) ) / 2
+	end
+
+	-- Helper function for adding blocks to castle.
+	-- Resulting y coordinate is such that block is resting exactly on the ground.
+	function castle:newBlock( rotation, width, height, filename )
+		local f = filename or self.default.filename
+		local w = width or self.default.width
+		local h = height or self.default.height
+		local obj = display.newImageRect( f, w, h )
+		obj.rotation = rotation or self.default.rotation
+		obj.x = self.default.x
+		obj.y = self.default.y - castle.blockVertH( obj )
+		arrayAppend( obj, castle )
+		return obj
+	end
+
+	local roofRight = castle:newBlock( 45 )
+	roofRight.x = castle.default.x
+	roofRight.y = roofRight.y
+		- (castle.default.width + castle.default.height)
+
+	local roofLeft = castle:newBlock( roofRight.rotation - 90 )
+	roofLeft.x = roofRight.x + (roofRight.height - roofRight.width) / math.sqrt(2)
+	roofLeft.y = roofRight.y
+
+	local wallRight = castle:newBlock( 90 )
+	wallRight.x = castle.default.x
+		+ ( castle.default.width / math.pow(2, 1.5) - castle.default.height / 2 )
+
+	local wallLeft = castle:newBlock( 90 )
+	wallLeft.x = castle.default.x
+		+ (roofRight.height - roofRight.width) / math.sqrt(2)
+		- ( castle.default.width / math.pow(2, 1.5) - castle.default.height / 2 )
+	
+	local ceiling = castle:newBlock(
+		0,
+		( wallRight.x - wallLeft.x ) + ( wallRight.height + wallLeft.height ) / 2
+	)
+	ceiling.x = ( roofLeft.x + roofRight.x ) / 2
+	ceiling.y = castle.default.y
+		- castle.blockVertH( ceiling )
+		- castle.default.width
+
+	for i=1, #castle do
+		physics.addBody( castle[i] )
+	end
+
+	physics.newJoint( "weld", roofRight, roofLeft,
+		( roofLeft.x + roofRight.x ) / 2,
+		castle.blockVertH(roofRight) / 2 - roofRight.height * math.sqrt(2) )
 
 	-- Create target
 
