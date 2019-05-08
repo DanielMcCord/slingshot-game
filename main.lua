@@ -212,11 +212,6 @@ function init()
 		obj.y = self.default.y - castle.blockVertH( obj )
 		obj.hp = 100
 
-		function obj.kill(  )
-			obj:removeSelf( )
-			obj = nil
-		end
-
 		function obj.impacted( event )
 			print("hp before:",obj.hp) -- testing
 			obj.hp = obj.hp - event.force * 9999
