@@ -14,14 +14,14 @@
 Grading
 
 	[DONE](10) Display of slingshot
-	[TODO](10) Display of castle on platform with target object inside
+	[PARTIAL](10) Display of castle on platform with target object inside
 	[DONE](10) Display tracking of projectile as user drags
 	[DONE](10) Physics of projectile in flight
 	[DONE](10) Physics of projectile knocking over castle parts
 	[DONE](10) At least two castle parts are connected by a joint
 	[TODO](10) Display of projectile causing damage to castle parts over repeated hits
 	[TODO](10) Castle parts explode/disappear after enough hits (individually)
-	[TODO](10) User wins if the target object is hit,
+	[PARTIAL](10) User wins if the target object is hit,
 		but loses if runs out of projectiles
 	[TODO](10) Good comments, indentation, and function structure
 
@@ -52,9 +52,13 @@ local endRound
 local push
 local pop
 local arrayAppend
+local onProjectilePostCollision
+local onCollision
 local loadProjectile
 local onProjectileEnded
 local onTargetHit
+local projectileInPlay
+local kill
 local newFrame
 local init
 
@@ -93,10 +97,27 @@ function arrayAppend( obj, arr )
 	push( obj, arr )
 end
 
+function onProjectilePostCollision ( event )
+	if event.other.hp then
+		event.other.impacted( event )
+		event.other.hp = event.other.hp - event.force * 9999999
+	end
+end
+
+--[[function onCollision( event )
+	if event.element1.isProjectile then
+		projectileCollision(event.element1,event.element2,event)
+		print("foobaz") --testing
+	elseif event.element2.isProjectile then
+		projectileCollision(event.element2,event.element1,event)
+	end
+end--]]
+
 -- Loads next projectile from stack into slingshot
 function loadProjectile( stack )
 	projectile = pop( stack )
 	projectile:ready( slingshot )
+	projectile:addEventListener( "postCollision", onProjectilePostCollision )
 end
 
 -- What to do when the current projectile is done
@@ -114,22 +135,29 @@ end
 
 -- Returns a boolean giving whether the projectile is still available to physics
 function projectileInPlay()
-	if not projectile then
+	if projectile == nil then
 		return false
 	elseif projectile.isBodyActive and not projectile.isAwake then
 		return false
-	elseif math.abs( projectile.x - glo.X_CENTER ) > ( glo.WIDTH + projectile.x ) / 2 then
+	elseif math.abs( projectile.x - glo.X_CENTER ) > ( glo.WIDTH) / 2 + 2 * (projectile.radius or 0) then
 		return false
 	else
 		return true
 	end
 end
 
+-- Completely removes and deletes the given object
+function kill( obj )
+	obj:removeSelf()
+	obj = nil
+end
+
 -- Run once per frame
 function newFrame()
 	if not projectileInPlay() then
-		projectile:removeSelf( )
-		projectile = nil
+		if projectile then
+			kill(projectile)
+		end
 		onProjectileEnded()
 	end
 end
@@ -183,6 +211,28 @@ function init()
 		obj.x = self.default.x
 		obj.y = self.default.y - castle.blockVertH( obj )
 		obj.hp = 100
+
+		function obj.kill(  )
+			obj:removeSelf( )
+			obj = nil
+		end
+
+		function obj.impacted( event )
+			print("hp before:",obj.hp) -- testing
+			obj.hp = obj.hp - event.force * 9999
+			print("hp after:",obj.hp) -- testing
+			if obj.hp <= 0 then
+				local e = display.newCircle( obj.x, obj.y, (obj.width + obj.height)/2 )
+				obj:removeSelf()
+				obj = nil
+				transition.to(e, {
+					xScale = 2,
+					yScale = 2,
+					alpha = .5,
+					onComplete = onExplosionEnd
+				})
+			end
+		end
 		arrayAppend( obj, castle )
 		return obj
 	end
@@ -229,7 +279,7 @@ function init()
 	-- Create projectiles
 	projectiles = {}
 	local projRadius = slingshot.width / 4
-	for i = 1, 5 do
+	for i = 1, 19 do
 		projectiles[i] = Projectile:new(
 			slingshot.x - slingshot.width,
 			slingshot.y + slingshot.height / 2 - projRadius * ( 2 * i - 1 ),
@@ -241,6 +291,7 @@ function init()
 	loadProjectile( projectiles, slingshot )
 
 	Runtime:addEventListener( "enterFrame", newFrame )
+	-- Runtime:addEventListener( "collision", onCollision )
 end
 
 init()

@@ -26,6 +26,8 @@ function Projectile:new( xCenter, yCenter, radius, parent )
 	p.ready = self.ready
 	p.aim = self.aim
 	p.fire = self.fire
+	p.fired = self.fired
+	p.onCollison = self.onCollison
 	return p
 end
 
@@ -43,7 +45,6 @@ function Projectile:ready( slingshot )
 end
 
 function Projectile.aim( event )
-	print(event.phase, "==ended?", event.phase == "ended")
 	local proj = event.target -- quick workaround
 	if event.phase == "began" or event.phase == "moved" then
 		local sling = proj.slingshot
@@ -65,7 +66,6 @@ function Projectile:fire()
 	local slingY = self.slingshot.y - self.slingshot.height * ( self.slingshot.nockHeight - 0.5 )
 	self.startingXVelocity = 1000 * ( slingX - self.x ) / self.slingshot.releaseDuration
 	self.startingYVelocity = 1000 * ( slingY - self.y ) / self.slingshot.releaseDuration
-	print("bazzz", self.startingXVelocity, self.startingYVelocity)
 	transition.to( self, {
 		time = self.slingshot.releaseDuration,
 		x = slingX,
@@ -74,10 +74,26 @@ function Projectile:fire()
 	} )
 end
 
+-- Called when the projectile hits something
+--[[function Projectile.onCollison ( event )
+	print("foobaz") --testing
+	if event.phase == "ended" and event.other.hp then
+		print("baaa", event.other) -- testing
+		event.other.impacted( event )
+	end
+end--]]
+-- Called when the projectile leaves the slingshot to start flying
 function Projectile.fired( obj )
 	physics.addBody(obj)
-	print("barrrgh", obj.startingXVelocity, obj.startingYVelocity)
 	obj:setLinearVelocity( obj.startingXVelocity, obj.startingYVelocity )
+	--[[if obj.collision then
+		obj:addEventListener( "collison", obj.onCollision )
+	end--]]
+	print("blahhhhh") -- testing
 end
+
+--[[function Projectile.fooblah(event)
+	print("this will probably fail") -- testing
+end--]]
 
 return Projectile
