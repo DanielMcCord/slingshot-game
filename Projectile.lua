@@ -89,7 +89,6 @@ function Projectile.fired( obj )
 	--[[if obj.collision then
 		obj:addEventListener( "collison", obj.onCollision )
 	end--]]
-	print("blahhhhh") -- testing
 end
 
 --[[function Projectile.fooblah(event)
