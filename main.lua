@@ -15,9 +15,9 @@ Grading
 
 	[DONE](10) Display of slingshot
 	[TODO](10) Display of castle on platform with target object inside
-	[TODO](10) Display tracking of projectile as user drags
-	[TODO](10) Physics of projectile in flight
-	[TODO](10) Physics of projectile knocking over castle parts
+	[DONE](10) Display tracking of projectile as user drags
+	[DONE](10) Physics of projectile in flight
+	[DONE](10) Physics of projectile knocking over castle parts
 	[DONE](10) At least two castle parts are connected by a joint
 	[TODO](10) Display of projectile causing damage to castle parts over repeated hits
 	[TODO](10) Castle parts explode/disappear after enough hits (individually)
@@ -131,6 +131,8 @@ function init()
 	local sa = require( "slingshot-attributes" )
 	slingshot = display.newImageRect( sa.file, sa.width, sa.height )
 	slingshot.x = sa.defaultX
+	slingshot.nockHeight = sa.nockHeight
+	slingshot.releaseDuration = sa.releaseDuration
 	slingshot.y = ground.y - ( slingshot.height + ground.height ) / 2 or sa.defaultY
 
 	-- Create castle with various default values
@@ -171,29 +173,31 @@ function init()
 	local roofRight = castle:newBlock( 45 )
 	roofRight.x = castle.default.x
 	roofRight.y = roofRight.y
-		- (castle.default.width + castle.default.height)
+		- (roofRight.width + roofRight.height)
 
-	local roofLeft = castle:newBlock( roofRight.rotation - 90 )
+	local roofLeft = castle:newBlock( roofRight.rotation - 90,
+		roofRight.width, roofRight.height )
 	roofLeft.x = roofRight.x + (roofRight.height - roofRight.width) / math.sqrt(2)
 	roofLeft.y = roofRight.y
 
-	local wallRight = castle:newBlock( 90 )
+	local wallRight = castle:newBlock( 90, roofRight.width, roofRight.height )
 	wallRight.x = castle.default.x
-		+ ( castle.default.width / math.pow(2, 1.5) - castle.default.height / 2 )
+		+ ( roofRight.width / math.pow(2, 1.5) - roofRight.height / 2 )
 
-	local wallLeft = castle:newBlock( 90 )
+	local wallLeft = castle:newBlock( 90, wallRight.width, wallRight.height )
 	wallLeft.x = castle.default.x
 		+ (roofRight.height - roofRight.width) / math.sqrt(2)
-		- ( castle.default.width / math.pow(2, 1.5) - castle.default.height / 2 )
+		- ( roofRight.width / math.pow(2, 1.5) - roofRight.height / 2 )
 	
 	local ceiling = castle:newBlock(
 		0,
-		( wallRight.x - wallLeft.x ) + ( wallRight.height + wallLeft.height ) / 2
+		( wallRight.x - wallLeft.x ) + ( wallRight.height + wallLeft.height ) / 2,
+		wallRight.height
 	)
 	ceiling.x = ( roofLeft.x + roofRight.x ) / 2
 	ceiling.y = castle.default.y
 		- castle.blockVertH( ceiling )
-		- castle.default.width
+		- wallRight.width
 
 	for i=1, #castle do
 		physics.addBody( castle[i] )
@@ -206,9 +210,18 @@ function init()
 	-- Create target
 
 	-- Create projectiles
+	projectiles = {}
+	local projRadius = slingshot.width / 4
+	for i = 1, 5 do
+		projectiles[i] = Projectile:new(
+			slingshot.x - slingshot.width,
+			slingshot.y + slingshot.height / 2 - projRadius * ( 2 * i - 1 ),
+			projRadius
+		)
+	end
 
 	-- Load the first projectile
-	-- loadProjectile( projectiles, slingshot )
+	loadProjectile( projectiles, slingshot )
 
 	Runtime:addEventListener( "enterFrame", newFrame )
 end

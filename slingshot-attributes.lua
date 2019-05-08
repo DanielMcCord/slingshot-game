@@ -19,5 +19,7 @@ s.width = 488 * s.scale
 s.height = 1114 * s.scale
 s.defaultX = glo.X_MIN + glo.WIDTH * 0.175
 s.defaultY = glo.Y_MAX - s.height * 0.5
+s.nockHeight = .75
+s.releaseDuration = 100
 
 return s

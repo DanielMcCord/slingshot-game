@@ -37,33 +37,47 @@ function Projectile:ready( slingshot )
 	self.slingshot = slingshot or self.slingshot
 	-- nock the projectile in its slingshot
 	self.x = self.slingshot.x
-	self.y = self.slingshot.y
+	self.y = self.slingshot.y - slingshot.height * ( slingshot.nockHeight - 0.5 )
 	-- listen for player trying to use the loaded projectile
 	self:addEventListener( "touch", self.aim )
 end
 
-function Projectile:aim( event )
-	if event.phase == "began" or "moved" then
-		local sling = self.slingshot
-		self.x = event.x
-		self.y = event.y
-		self.xPower = ( sling.x - self.x ) / sling.releaseDuration
-		self.yPower = ( sling.y - self.y ) / sling.releaseDuration
+function Projectile.aim( event )
+	print(event.phase, "==ended?", event.phase == "ended")
+	local proj = event.target -- quick workaround
+	if event.phase == "began" or event.phase == "moved" then
+		local sling = proj.slingshot
+		proj.x = event.x
+		proj.y = event.y
+		proj.xPower = ( sling.x - proj.x ) / sling.releaseDuration
+		proj.yPower = ( sling.y - proj.y ) / sling.releaseDuration
 	elseif event.phase == "ended" then
-		self:fire()
+		proj:fire()
 	else -- event.phase == "cancelled" -- only other documented phase for this event
-		self:ready()
+		proj:ready()
 	end
 end
 
 function Projectile:fire()
 	-- Prevent user from messing with projectile after firing
 	self:removeEventListener( "touch", self.aim )
+	local slingX = self.slingshot.x
+	local slingY = self.slingshot.y - self.slingshot.height * ( self.slingshot.nockHeight - 0.5 )
+	self.startingXVelocity = 1000 * ( slingX - self.x ) / self.slingshot.releaseDuration
+	self.startingYVelocity = 1000 * ( slingY - self.y ) / self.slingshot.releaseDuration
+	print("bazzz", self.startingXVelocity, self.startingYVelocity)
 	transition.to( self, {
 		time = self.slingshot.releaseDuration,
-		x = self.slingshot.x,
-		y = self.slingshot.y,
+		x = slingX,
+		y = slingY,
+		onComplete = Projectile.fired
 	} )
+end
+
+function Projectile.fired( obj )
+	physics.addBody(obj)
+	print("barrrgh", obj.startingXVelocity, obj.startingYVelocity)
+	obj:setLinearVelocity( obj.startingXVelocity, obj.startingYVelocity )
 end
 
 return Projectile
