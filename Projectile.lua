@@ -48,7 +48,9 @@ end
 
 function Projectile.aim( event )
 	local proj = event.target -- quick workaround
-	if event.phase == "began" or event.phase == "moved" then
+	if event.phase == "began" then
+		display.getCurrentStage():setFocus( proj )
+	elseif event.phase == "moved" then
 		proj.x = event.x
 		proj.y = event.y
 	elseif event.phase == "ended" then
