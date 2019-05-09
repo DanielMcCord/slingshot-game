@@ -40,7 +40,7 @@ local physics = require( "physics" )
 local Projectile = require( "Projectile" )
 
 -- Constants
-local projectileCount = 5 -- how many projectiles the player starts with
+local projectileCount = 6 -- how many projectiles the player starts with
 
 -- Variables
 local ground -- static platform at bottom of screen
@@ -136,15 +136,27 @@ end
 
 -- Returns a boolean giving whether the projectile is still available to physics
 function projectileInPlay()
-	if projectile == nil then
+	return ( -- return true by default, but return false if:
+		projectile -- 1) projectile is nil,
+		and ( -- 2) projectile is both active and asleep, or
+			not projectile.isBodyActive
+			or projectile.isAwake )
+		and ( -- 3) projectile is off the screen
+			math.abs( ( projectile.x or 0 ) - glo.X_CENTER )
+			<= ( glo.WIDTH) / 2 + 40 + 2 * (projectile.radius or 0) ) )
+	--[[return not ( ( projectile == nil )
+		or ( projectile.isBodyActive and not projectile.isAwake )
+		or ( math.abs( ( projectile.x or 0 ) - glo.X_CENTER )
+			> ( glo.WIDTH) / 2 + 2 * (projectile.radius or 0) ) )--]]
+	--[[if projectile == nil then
 		return false
 	elseif projectile.isBodyActive and not projectile.isAwake then
 		return false
-	elseif math.abs( projectile.x - glo.X_CENTER ) > ( glo.WIDTH) / 2 + 2 * (projectile.radius or 0) then
+	elseif math.abs( ( projectile.x or 0 ) - glo.X_CENTER ) > ( glo.WIDTH) / 2 + 2 * (projectile.radius or 0) then
 		return false
 	else
 		return true
-	end
+	end--]]
 end
 
 -- Completely removes and deletes the given object

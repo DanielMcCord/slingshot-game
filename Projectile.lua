@@ -14,6 +14,8 @@ local physics = require( "physics" )
 
 local Projectile = {}
 
+-- Constructor. takes arguments for display.newCircle.
+-- As with newCircle, parent is an optional parameter.
 function Projectile:new( xCenter, yCenter, radius, parent )
 	local p
 	if parent then
@@ -47,11 +49,8 @@ end
 function Projectile.aim( event )
 	local proj = event.target -- quick workaround
 	if event.phase == "began" or event.phase == "moved" then
-		local sling = proj.slingshot
 		proj.x = event.x
 		proj.y = event.y
-		proj.xPower = ( sling.x - proj.x ) / sling.releaseDuration
-		proj.yPower = ( sling.y - proj.y ) / sling.releaseDuration
 	elseif event.phase == "ended" then
 		proj:fire()
 	else -- event.phase == "cancelled" -- only other documented phase for this event
@@ -74,25 +73,11 @@ function Projectile:fire()
 	} )
 end
 
--- Called when the projectile hits something
---[[function Projectile.onCollison ( event )
-	print("foobaz") --testing
-	if event.phase == "ended" and event.other.hp then
-		print("baaa", event.other) -- testing
-		event.other.impacted( event )
-	end
-end--]]
 -- Called when the projectile leaves the slingshot to start flying
 function Projectile.fired( obj )
 	physics.addBody(obj)
 	obj:setLinearVelocity( obj.startingXVelocity, obj.startingYVelocity )
-	--[[if obj.collision then
-		obj:addEventListener( "collison", obj.onCollision )
-	end--]]
-end
 
---[[function Projectile.fooblah(event)
-	print("this will probably fail") -- testing
-end--]]
+end
 
 return Projectile
