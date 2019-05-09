@@ -21,6 +21,6 @@ g.Y_MAX = g.Y_MIN + g.HEIGHT -- the bottom edge of the display
 g.X_CENTER = (g.X_MIN + g.X_MAX) / 2 -- the center of the display (horozontal axis)
 g.Y_CENTER = (g.Y_MIN + g.Y_MAX) / 2 -- the center of the display (vertical axis)
 g.MESSAGE_ON_WIN = "You win!"
-g.MESSAGE_ON_LOSE = "You lost.\nTry again?"
+g.MESSAGE_ON_LOSE = "You lost."
 
 return g

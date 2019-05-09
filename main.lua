@@ -14,14 +14,14 @@
 Grading
 
 	[DONE](10) Display of slingshot
-	[PARTIAL](10) Display of castle on platform with target object inside
+	[DONE](10) Display of castle on platform with target object inside
 	[DONE](10) Display tracking of projectile as user drags
 	[DONE](10) Physics of projectile in flight
 	[DONE](10) Physics of projectile knocking over castle parts
 	[DONE](10) At least two castle parts are connected by a joint
 	[PARTIAL](10) Display of projectile causing damage to castle parts over repeated hits
 	[DONE](10) Castle parts explode/disappear after enough hits (individually)
-	[PARTIAL](10) User wins if the target object is hit,
+	[DONE](10) User wins if the target object is hit,
 		but loses if runs out of projectiles
 	[PARTIAL](10) Good comments, indentation, and function structure
 
@@ -47,6 +47,7 @@ local ground -- static platform at bottom of screen
 local slingshot -- the display object for the slingshot, which is not a physics body
 local projectiles -- stack of all the player's unused projectiles
 local castle -- table of all the physics objects that make up the castle
+local targets -- display group of targets. only one for now.
 local projectile -- the active projectile, popped from projectiles
 local roundEnded -- text that is generated when the round ends
 
@@ -58,7 +59,7 @@ local arrayAppend
 local onProjectilePostCollision
 local loadProjectile
 local onProjectileEnded
-local onTargetHit
+local targetHit
 local projectileInPlay
 local kill
 local newFrame
@@ -100,8 +101,11 @@ function arrayAppend( obj, arr )
 end
 
 function onProjectilePostCollision ( event )
-	if event.other.hp then
-		event.other.impacted( event )
+	local o = event.other
+	if o.hp then
+		o.impacted( event )
+	elseif o.isTarget then
+		targetHit( o )
 	end
 end
 
@@ -130,8 +134,11 @@ function onProjectileEnded()
 	end
 end
 
-function onTargetHit()
-	endRound( glo.MESSAGE_ON_WIN )
+function targetHit( obj )
+	kill( obj )
+	if targets.numChildren <= 0 then
+		endRound( glo.MESSAGE_ON_WIN )
+	end
 end
 
 -- Returns a boolean giving whether the projectile is still available to physics
@@ -163,6 +170,12 @@ end
 function kill( obj )
 	obj:removeSelf()
 	obj = nil
+end
+
+-- Accurately calculates the vertical height of a rectangle that is rotated at any angle.
+function verticalHeight( obj )
+	return obj.width * math.sin( math.rad( obj.rotation ) ) / 2
+		+ obj.height * math.cos( math.rad( obj.rotation ) ) / 2
 end
 
 -- Run once per frame
@@ -222,7 +235,7 @@ function init()
 		local obj = display.newImageRect( f, w, h )
 		obj.rotation = rotation or self.default.rotation
 		obj.x = self.default.x
-		obj.y = self.default.y - castle.blockVertH( obj )
+		obj.y = self.default.y - verticalHeight( obj )
 		obj.maxHP = 100
 		obj.hp = 100
 
@@ -282,11 +295,34 @@ function init()
 		physics.addBody( castle[i] )
 	end
 
-	physics.newJoint( "weld", roofRight, roofLeft,
-		( roofLeft.x + roofRight.x ) / 2,
+	physics.newJoint( "weld", roofRight, roofLeft, ceiling.x,
 		castle.blockVertH(roofRight) / 2 - roofRight.height * math.sqrt(2) )
 
 	-- Create target
+	targets = display.newGroup()
+	targets.default = {
+		filename = "target.png",
+		scale = 1 / 16,
+	}
+	targets.default.width = 394 * targets.default.scale
+	targets.default.height = 492 * targets.default.scale
+
+	function targets:newTarget( x, y, filename, width, height )
+		local f = filename or self.default.filename
+		local w = width or self.default.width
+		local h = height or self.default.height
+		local obj = display.newImageRect( f, w, h )
+		obj.x = x
+		obj.y = y
+		obj.isTarget = true
+		targets:insert( obj )
+		
+		return obj
+	end
+
+	local onlyTarget = targets:newTarget( ceiling.x,
+		castle.default.y - targets.default.height / 2 )
+	physics.addBody( onlyTarget )
 
 	-- Create projectiles
 	projectiles = {}
@@ -303,7 +339,6 @@ function init()
 	loadProjectile( projectiles, slingshot )
 
 	Runtime:addEventListener( "enterFrame", newFrame )
-	-- Runtime:addEventListener( "collision", onCollision )
 end
 
 init()
