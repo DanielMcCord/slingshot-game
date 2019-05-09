@@ -35,8 +35,6 @@ end
 
 -- Places the projectile in the slingshot.
 function Projectile:ready( slingshot )
-	-- Remove the listener, because it might already exist
-	self:removeEventListener( "touch", self.aim )
 	-- Set the projectile's associated slingshot, or fall back on the existing one.
 	self.slingshot = slingshot or self.slingshot
 	-- nock the projectile in its slingshot
@@ -54,6 +52,8 @@ function Projectile.aim( event )
 		proj.x = event.x
 		proj.y = event.y
 	elseif event.phase == "ended" then
+		display.getCurrentStage():setFocus( nil )
+		proj:removeEventListener( "touch", proj.aim )
 		proj:fire()
 	else -- event.phase == "cancelled" -- only other documented phase for this event
 		proj:ready()
@@ -61,8 +61,6 @@ function Projectile.aim( event )
 end
 
 function Projectile:fire()
-	-- Prevent user from messing with projectile after firing
-	self:removeEventListener( "touch", self.aim )
 	local slingX = self.slingshot.x
 	local slingY = self.slingshot.y - self.slingshot.height * ( self.slingshot.nockHeight - 0.5 )
 	self.startingXVelocity = 1000 * ( slingX - self.x ) / self.slingshot.releaseDuration
