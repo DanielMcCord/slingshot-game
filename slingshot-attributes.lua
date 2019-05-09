@@ -14,7 +14,7 @@ local glo = require( "globals" )
 
 local s = {}
 s.file = "slingshot.png"
-s.scale = 1 / 16
+s.scale = 1 / 13 -- set between 1/7 and 1/15 for best results
 s.width = 488 * s.scale
 s.height = 1114 * s.scale
 s.defaultX = glo.X_MIN + glo.WIDTH * 0.175
