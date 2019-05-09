@@ -19,11 +19,11 @@ Grading
 	[DONE](10) Physics of projectile in flight
 	[DONE](10) Physics of projectile knocking over castle parts
 	[DONE](10) At least two castle parts are connected by a joint
-	[PARTIAL](10) Display of projectile causing damage to castle parts over repeated hits
+	[DONE](10) Display of projectile causing damage to castle parts over repeated hits
 	[DONE](10) Castle parts explode/disappear after enough hits (individually)
 	[DONE](10) User wins if the target object is hit,
 		but loses if runs out of projectiles
-	[PROBABLY](10) Good comments, indentation, and function structure
+	[DONE](10) Good comments, indentation, and function structure
 
 Extra Credit:
 
@@ -126,6 +126,7 @@ function onProjectileEnded()
 	end
 end
 
+-- What to do when target is hit. Checks if game has been won.
 function targetHit( obj )
 	kill( obj )
 	if targets.numChildren <= 0 then
@@ -135,7 +136,7 @@ end
 
 -- Returns a boolean giving whether the projectile is still available to physics
 function projectileInPlay()
-	-- return true unless:
+	-- return true unless either:
 	return (
 		-- 1) projectile is nil,
 		projectile
@@ -146,7 +147,8 @@ function projectileInPlay()
 			math.abs( ( projectile.x or 0 ) - glo.X_CENTER )
 			<= glo.WIDTH / 2 + 2 * ( projectile.path and projectile.path.radius or 0 ) )
 		-- 4) projectile is completely off the bottom end of the display.
-		and ( ( projectile.y or 0 ) - glo.Y_MAX <= 2 * ( projectile.path and projectile.path.radius or 0 ) ) )
+		and ( ( projectile.y or 0 ) - glo.Y_MAX <= 2 * ( projectile.path and projectile.path.radius or 0 ) )
+	)
 end
 
 -- Completely removes and deletes the given object
@@ -173,8 +175,8 @@ end
 
 -- Run at app startup
 function init()
-
 	physics.start( )
+
 	-- Create platforms/ground
 	ground = display.newImageRect( "ground.png", glo.WIDTH, glo.HEIGHT / 10 )
 	ground.x = glo.X_CENTER
@@ -222,14 +224,22 @@ function init()
 		obj.maxHP = 100
 		obj.hp = 100
 
+		-- Get the remaining percentage of HP, as a value ranging from 0 and 1
+		function obj.percentHP()
+			return obj.hp / obj.maxHP
+		end
+
+		-- what to do when obj is hit
 		function obj.impacted( event )
 			print("hp before:",obj.hp) -- testing
 			print("force:",event.force)
 			print("phase:",event.phase)
 			obj.hp = obj.hp - event.force * 1000
-			--obj:setFillColor( 255 * (1 - obj.hp / obj.maxHP), 0, 0 )
+			obj:setFillColor( 1, obj.percentHP(), 1 )
 			print("hp after:",obj.hp) -- testing
+			-- Check if obj hitpoints have reached zero
 			if obj.hp <= 0 then
+				-- delete the object and make an explosion animation
 				local e = display.newCircle( obj.x, obj.y, (obj.width + obj.height)/4 )
 				obj:removeSelf()
 				obj = nil
@@ -245,6 +255,7 @@ function init()
 		return obj
 	end
 
+	-- Individual parts of the castle
 	local roofRight = castle:newBlock( 45 )
 	roofRight.x = castle.default.x
 	roofRight.y = roofRight.y
@@ -278,6 +289,7 @@ function init()
 		physics.addBody( castle[i] )
 	end
 
+	-- join the two roof blocks
 	physics.newJoint( "weld", roofRight, roofLeft, ceiling.x,
 		castle.blockVertH(roofRight) / 2 - roofRight.height * math.sqrt(2) )
 
@@ -290,6 +302,8 @@ function init()
 	targets.default.width = 394 * targets.default.scale
 	targets.default.height = 492 * targets.default.scale
 
+	-- Helper to add new targets to the targets group
+	-- Takes x,y coordinates and the required args for display.newImageRect
 	function targets:newTarget( x, y, filename, width, height )
 		local f = filename or self.default.filename
 		local w = width or self.default.width
@@ -303,6 +317,7 @@ function init()
 		return obj
 	end
 
+	-- Create instance of the target
 	local onlyTarget = targets:newTarget( ceiling.x,
 		castle.default.y - targets.default.height / 2 )
 	physics.addBody( onlyTarget )

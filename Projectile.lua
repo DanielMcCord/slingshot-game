@@ -44,6 +44,7 @@ function Projectile:ready( slingshot )
 	self:addEventListener( "touch", self.aim )
 end
 
+-- Drags the projectile away from slingshot before firing
 function Projectile.aim( event )
 	local proj = event.target -- quick workaround
 	if event.phase == "began" then
@@ -60,6 +61,7 @@ function Projectile.aim( event )
 	end
 end
 
+-- Snaps the projectile back towards the slingshot, giving it momentum
 function Projectile:fire()
 	local slingX = self.slingshot.x
 	local slingY = self.slingshot.y - self.slingshot.height * ( self.slingshot.nockHeight - 0.5 )
