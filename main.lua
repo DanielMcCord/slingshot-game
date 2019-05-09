@@ -23,7 +23,7 @@ Grading
 	[DONE](10) Castle parts explode/disappear after enough hits (individually)
 	[DONE](10) User wins if the target object is hit,
 		but loses if runs out of projectiles
-	[PARTIAL](10) Good comments, indentation, and function structure
+	[PROBABLY](10) Good comments, indentation, and function structure
 
 Extra Credit:
 
@@ -47,7 +47,7 @@ local ground -- static platform at bottom of screen
 local slingshot -- the display object for the slingshot, which is not a physics body
 local projectiles -- stack of all the player's unused projectiles
 local castle -- table of all the physics objects that make up the castle
-local targets -- display group of targets. only one for now.
+local targets -- Display group of targets. Only one child for now.
 local projectile -- the active projectile, popped from projectiles
 local roundEnded -- text that is generated when the round ends
 
@@ -62,12 +62,13 @@ local onProjectileEnded
 local targetHit
 local projectileInPlay
 local kill
+local verticalHeight
 local newFrame
 local init
 
 -- Displays win or loss message when round ends
 function endRound( message )
-	if roundEnded == nil then
+	if not roundEnded then
 		roundEnded = display.newText{
 			text = message,
 			x = glo.WIDTH / 2,
@@ -109,15 +110,6 @@ function onProjectilePostCollision ( event )
 	end
 end
 
---[[function onCollision( event )
-	if event.element1.isProjectile then
-		projectileCollision(event.element1,event.element2,event)
-		print("foobaz") --testing
-	elseif event.element2.isProjectile then
-		projectileCollision(event.element2,event.element1,event)
-	end
-end--]]
-
 -- Loads next projectile from stack into slingshot
 function loadProjectile( stack )
 	projectile = pop( stack )
@@ -143,27 +135,18 @@ end
 
 -- Returns a boolean giving whether the projectile is still available to physics
 function projectileInPlay()
-	return ( -- return true by default, but return false if:
-		projectile -- 1) projectile is nil,
-		and ( -- 2) projectile is both active and asleep, or
-			not projectile.isBodyActive
-			or projectile.isAwake )
-		and ( -- 3) projectile is off the screen
+	-- return true unless:
+	return (
+		-- 1) projectile is nil,
+		projectile
+		-- 2) projectile is both active and asleep,
+		and ( not projectile.isBodyActive or projectile.isAwake )
+		-- 3) projectile is completely off the left or right ends of the display, or
+		and (
 			math.abs( ( projectile.x or 0 ) - glo.X_CENTER )
-			<= ( glo.WIDTH) / 2 + 40 + 2 * (projectile.radius or 0) ) )
-	--[[return not ( ( projectile == nil )
-		or ( projectile.isBodyActive and not projectile.isAwake )
-		or ( math.abs( ( projectile.x or 0 ) - glo.X_CENTER )
-			> ( glo.WIDTH) / 2 + 2 * (projectile.radius or 0) ) )--]]
-	--[[if projectile == nil then
-		return false
-	elseif projectile.isBodyActive and not projectile.isAwake then
-		return false
-	elseif math.abs( ( projectile.x or 0 ) - glo.X_CENTER ) > ( glo.WIDTH) / 2 + 2 * (projectile.radius or 0) then
-		return false
-	else
-		return true
-	end--]]
+			<= glo.WIDTH / 2 + 2 * ( projectile.path and projectile.path.radius or 0 ) )
+		-- 4) projectile is completely off the bottom end of the display.
+		and ( ( projectile.y or 0 ) - glo.Y_MAX <= 2 * ( projectile.path and projectile.path.radius or 0 ) ) )
 end
 
 -- Completely removes and deletes the given object
@@ -244,7 +227,7 @@ function init()
 			print("force:",event.force)
 			print("phase:",event.phase)
 			obj.hp = obj.hp - event.force * 1000
-			obj:setFillColor( 255 * (1 - obj.hp / obj.maxHP), 0, 0 )
+			--obj:setFillColor( 255 * (1 - obj.hp / obj.maxHP), 0, 0 )
 			print("hp after:",obj.hp) -- testing
 			if obj.hp <= 0 then
 				local e = display.newCircle( obj.x, obj.y, (obj.width + obj.height)/4 )
