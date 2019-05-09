@@ -30,20 +30,26 @@ Extra Credit:
 	(0-5) Interesting/creative coolness in any area,
 		above and beyond the minimum requirements above.
 
-My Ideas:
-	Make the level contain collectable targets that do not affect physics,
-		but are usable as projectiles. They will be pushed to the projectiles stack.
+Notes:
+	I made the blocks take damage according to the amount of force with which they are
+		struck. The amount of damage is shown using with a red tint on the block.
+
+	I chose not to use "static" for the projectile because I don't want it to
+		interact with the physics world at all until fired.
+
+	Coloring of projectiles is cosmetic, and lets you see that the top one is loaded.
 --]]
 
 local glo = require( "globals" )
 local physics = require( "physics" )
+local widget = require( "widget" )
 local Projectile = require( "Projectile" )
 
 -- Constants
 local projectileCount = 6 -- how many projectiles the player starts with
+local damageMultiplier = 1000 -- hp lost by blocks per newton from projectile
 
 -- Variables
-local ground -- static platform at bottom of screen
 local slingshot -- the display object for the slingshot, which is not a physics body
 local projectiles -- stack of all the player's unused projectiles
 local castle -- table of all the physics objects that make up the castle
@@ -63,6 +69,7 @@ local targetHit
 local projectileInPlay
 local kill
 local verticalHeight
+local resetProjectiles
 local newFrame
 local init
 
@@ -101,9 +108,10 @@ function arrayAppend( obj, arr )
 	push( obj, arr )
 end
 
+-- Handles projectile colliding with a block or target
 function onProjectilePostCollision ( event )
 	local o = event.other
-	if o.hp then
+	if o.hp then -- it's a block with hitpoints
 		o.impacted( event )
 	elseif o.isTarget then
 		targetHit( o )
@@ -163,6 +171,25 @@ function verticalHeight( obj )
 		+ obj.height * math.cos( math.rad( obj.rotation ) ) / 2
 end
 
+-- Removes the current projectile from play if applicable,
+-- replenishes any missing rounds, and then loads one into the slingshot.
+function resetProjectiles()
+	if projectile then
+		kill(projectile)
+	end
+	local projRadius = slingshot.width / 4
+	for i = 1, projectileCount do
+		projectiles[i] = projectiles[i] or Projectile:new(
+			slingshot.x - slingshot.width,
+			slingshot.y + slingshot.height / 2 - projRadius * ( 2 * i - 1 ),
+			projRadius
+		)
+	end
+
+	-- Load the first projectile
+	loadProjectile( projectiles, slingshot )
+end
+
 -- Run once per frame
 function newFrame()
 	if not projectileInPlay() then
@@ -177,11 +204,23 @@ end
 function init()
 	physics.start( )
 
-	-- Create platforms/ground
-	ground = display.newImageRect( "ground.png", glo.WIDTH, glo.HEIGHT / 10 )
+	-- Create ground
+	local ground = display.newImageRect( "ground.png", glo.WIDTH, glo.HEIGHT / 10 )
 	ground.x = glo.X_CENTER
 	ground.y = glo.Y_MAX - ground.height / 2
 	physics.addBody( ground, "static" )
+
+	-- Create platform
+	local platform = display.newImageRect( "ground.png", glo.WIDTH / 5, glo.HEIGHT / 20 )
+	platform.x = glo.X_MIN + glo.WIDTH * 0.75
+	platform.y = glo.Y_MIN + glo.HEIGHT * 0.6
+	physics.addBody( platform, "static" )
+
+	-- Create wall that blocks the top three-fourths of the right side
+	local wall = display.newImageRect( "wall.png", glo.WIDTH / 50, 3 * glo.HEIGHT / 4 )
+	wall.x = glo.X_MAX - wall.width / 2
+	wall.y = glo.Y_MIN + glo.HEIGHT * 0.25
+	physics.addBody( wall, "static" )
 
 	-- Create slingshot
 	local sa = require( "slingshot-attributes" )
@@ -195,12 +234,12 @@ function init()
 	castle = {
 		default = {
 			rotation = 0,
-			width = 60,
+			width = 40,
 			height = 10,
 			x = 0.75 * glo.WIDTH + glo.X_MIN,
-			-- Note: default.y is ground level, which you probably don't want.
+			-- Note: default.y is platform level, which you probably don't want.
 			-- castle:newBlock (below) does trig magic to fix this.
-			y = ground.y - (ground.height) / 2,
+			y = platform.y - (platform.height) / 2,
 			filename = "block.png"
 		}
 	}
@@ -231,12 +270,8 @@ function init()
 
 		-- what to do when obj is hit
 		function obj.impacted( event )
-			print("hp before:",obj.hp) -- testing
-			print("force:",event.force)
-			print("phase:",event.phase)
-			obj.hp = obj.hp - event.force * 1000
+			obj.hp = obj.hp - event.force * damageMultiplier
 			obj:setFillColor( 1, obj.percentHP(), 1 )
-			print("hp after:",obj.hp) -- testing
 			-- Check if obj hitpoints have reached zero
 			if obj.hp <= 0 then
 				-- delete the object and make an explosion animation
@@ -322,19 +357,18 @@ function init()
 		castle.default.y - targets.default.height / 2 )
 	physics.addBody( onlyTarget )
 
+	-- Create reset button
+	widget.newButton{
+		top = glo.Y_MIN,
+		left = glo.X_MIN,
+		width = glo.WIDTH * 0.15,
+		label = "Reset Projectiles",
+		onRelease = resetProjectiles,
+	}
+
 	-- Create projectiles
 	projectiles = {}
-	local projRadius = slingshot.width / 4
-	for i = 1, projectileCount do
-		projectiles[i] = Projectile:new(
-			slingshot.x - slingshot.width,
-			slingshot.y + slingshot.height / 2 - projRadius * ( 2 * i - 1 ),
-			projRadius
-		)
-	end
-
-	-- Load the first projectile
-	loadProjectile( projectiles, slingshot )
+	resetProjectiles()
 
 	Runtime:addEventListener( "enterFrame", newFrame )
 end

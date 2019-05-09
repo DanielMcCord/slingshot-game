@@ -23,6 +23,12 @@ function Projectile:new( xCenter, yCenter, radius, parent )
 	else
 		p = display.newCircle( xCenter, yCenter, radius )
 	end
+	-- Give each projectile a random color
+	p:setFillColor(
+		math.random() / 3 + 0.5,
+		math.random() / 3 + 0.5,
+		math.random() / 3 + 0.5
+	)
 	-- Metatables were not working correctly with ShapeObject class,
 	-- so I forced the issue by adding these methods the old way.
 	p.ready = self.ready
@@ -65,6 +71,10 @@ end
 function Projectile:fire()
 	local slingX = self.slingshot.x
 	local slingY = self.slingshot.y - self.slingshot.height * ( self.slingshot.nockHeight - 0.5 )
+	-- velocity = deltaPosition / deltaTime,
+	-- so the below values should be exact.
+	-- Note that velocity is m/s, but transition time is in ms,
+	-- hence the factor of 1000.
 	self.startingXVelocity = 1000 * ( slingX - self.x ) / self.slingshot.releaseDuration
 	self.startingYVelocity = 1000 * ( slingY - self.y ) / self.slingshot.releaseDuration
 	transition.to( self, {
@@ -77,6 +87,9 @@ end
 
 -- Called when the projectile leaves the slingshot to start flying
 function Projectile.fired( obj )
+	-- The projectile is finally brought into the physics world,
+	-- with the appropriate velocity values already calculated as soon as the
+	-- slingshot is released.
 	physics.addBody(obj)
 	obj:setLinearVelocity( obj.startingXVelocity, obj.startingYVelocity )
 
