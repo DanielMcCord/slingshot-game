@@ -19,11 +19,11 @@ Grading
 	[DONE](10) Physics of projectile in flight
 	[DONE](10) Physics of projectile knocking over castle parts
 	[DONE](10) At least two castle parts are connected by a joint
-	[TODO](10) Display of projectile causing damage to castle parts over repeated hits
-	[TODO](10) Castle parts explode/disappear after enough hits (individually)
+	[PARTIAL](10) Display of projectile causing damage to castle parts over repeated hits
+	[DONE](10) Castle parts explode/disappear after enough hits (individually)
 	[PARTIAL](10) User wins if the target object is hit,
 		but loses if runs out of projectiles
-	[TODO](10) Good comments, indentation, and function structure
+	[PARTIAL](10) Good comments, indentation, and function structure
 
 Extra Credit:
 
@@ -39,9 +39,12 @@ local glo = require( "globals" )
 local physics = require( "physics" )
 local Projectile = require( "Projectile" )
 
+-- Constants
+local projectileCount = 5 -- how many projectiles the player starts with
+
 -- Variables
 local ground -- static platform at bottom of screen
-local slingshot
+local slingshot -- the display object for the slingshot, which is not a physics body
 local projectiles -- stack of all the player's unused projectiles
 local castle -- table of all the physics objects that make up the castle
 local projectile -- the active projectile, popped from projectiles
@@ -53,7 +56,6 @@ local push
 local pop
 local arrayAppend
 local onProjectilePostCollision
-local onCollision
 local loadProjectile
 local onProjectileEnded
 local onTargetHit
@@ -100,7 +102,6 @@ end
 function onProjectilePostCollision ( event )
 	if event.other.hp then
 		event.other.impacted( event )
-		event.other.hp = event.other.hp - event.force * 9999999
 	end
 end
 
@@ -210,11 +211,15 @@ function init()
 		obj.rotation = rotation or self.default.rotation
 		obj.x = self.default.x
 		obj.y = self.default.y - castle.blockVertH( obj )
+		obj.maxHP = 100
 		obj.hp = 100
 
 		function obj.impacted( event )
 			print("hp before:",obj.hp) -- testing
-			obj.hp = obj.hp - event.force * 9999
+			print("force:",event.force)
+			print("phase:",event.phase)
+			obj.hp = obj.hp - event.force * 1000
+			obj:setFillColor( 255 * (1 - obj.hp / obj.maxHP), 0, 0 )
 			print("hp after:",obj.hp) -- testing
 			if obj.hp <= 0 then
 				local e = display.newCircle( obj.x, obj.y, (obj.width + obj.height)/4 )
@@ -274,7 +279,7 @@ function init()
 	-- Create projectiles
 	projectiles = {}
 	local projRadius = slingshot.width / 4
-	for i = 1, 19 do
+	for i = 1, projectileCount do
 		projectiles[i] = Projectile:new(
 			slingshot.x - slingshot.width,
 			slingshot.y + slingshot.height / 2 - projRadius * ( 2 * i - 1 ),
